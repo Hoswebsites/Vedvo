@@ -1,23 +1,22 @@
-
-import express from 'express';
-import { Request, Response } from 'express';
-import fetch from 'node-fetch';
+import express, { Request, Response, NextFunction } from 'express';
+import serverless from 'serverless-http';
 
 const app = express();
 app.use(express.json());
 
-// Load environment variables (for local development)
-// require('dotenv').config();
-
 // CORS middleware to allow requests from your frontend
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Access-Control-Allow-Origin', '*'); // Replace with your frontend origin in production
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, apikey');
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
     next();
 });
 
-// Helper function to handle Supabase Edge Function calls
+// Helper function to handle Supabase Edge Function calls using native fetch (Node 20+)
 async function callSupabaseEdgeFunction(url: string, payload: any, headers: any) {
     try {
         const response = await fetch(url, {
@@ -43,7 +42,8 @@ app.post('/generate-image', async (req: Request, res: Response) => {
 
         // Basic validation
         if (!prompt || !mode || !n) {
-            return res.status(400).json({ status: 1, message: 'Missing required parameters: prompt, mode, n' });
+            res.status(400).json({ status: 1, message: 'Missing required parameters: prompt, mode, n' });
+            return;
         }
 
         const SUPABASE_IMAGE_URL = process.env.SUPABASE_IMAGE_URL;
@@ -82,7 +82,8 @@ app.post('/query-image', async (req: Request, res: Response) => {
         const { taskId } = req.body;
 
         if (!taskId) {
-            return res.status(400).json({ status: 1, message: 'Missing required parameter: taskId' });
+            res.status(400).json({ status: 1, message: 'Missing required parameter: taskId' });
+            return;
         }
 
         const SUPABASE_IMAGE_URL = process.env.SUPABASE_IMAGE_URL;
@@ -119,7 +120,8 @@ app.post('/generate-video', async (req: Request, res: Response) => {
         const { prompt, duration, aspect_ratio, sound, mode } = req.body;
 
         if (!prompt || !duration || !aspect_ratio || !sound || !mode) {
-            return res.status(400).json({ status: 1, message: 'Missing required parameters for video generation' });
+            res.status(400).json({ status: 1, message: 'Missing required parameters for video generation' });
+            return;
         }
 
         const SUPABASE_VIDEO_ROUTER_URL = process.env.SUPABASE_VIDEO_ROUTER_URL;
@@ -160,7 +162,8 @@ app.post('/query-video', async (req: Request, res: Response) => {
         const { taskId } = req.body;
 
         if (!taskId) {
-            return res.status(400).json({ status: 1, message: 'Missing required parameter: taskId' });
+            res.status(400).json({ status: 1, message: 'Missing required parameter: taskId' });
+            return;
         }
 
         const SUPABASE_VIDEO_ROUTER_URL = process.env.SUPABASE_VIDEO_ROUTER_URL;
@@ -191,4 +194,4 @@ app.post('/query-video', async (req: Request, res: Response) => {
 });
 
 // Export the app for Vercel Serverless Functions
-module.exports = app;
+export default serverless(app);
