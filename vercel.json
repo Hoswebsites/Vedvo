@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "buildCommand": "echo 'Static site'",
+  "public": true,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/api.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    }
+  ]
+}
